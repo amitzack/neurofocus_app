@@ -46,6 +46,17 @@
     margin: 0 auto 20px;
   }
   .mark svg{ width: 90px; height:70px; }
+  .mark svg path{
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: eeg-draw 2.2s ease-in-out infinite;
+  }
+  @keyframes eeg-draw{
+    0%   { stroke-dashoffset: 300; }
+    45%  { stroke-dashoffset: 0; }
+    55%  { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -300; }
+  }
   h1{
     font-family:'Heebo', sans-serif;
     font-size: 34px; font-weight: 800;
@@ -70,7 +81,7 @@
     box-shadow: 0 8px 20px -14px rgba(22,50,79,0.25);
   }
   .status .dot{ width:9px; height:9px; border-radius:50%; background: #C7C1AF; flex:none; }
-  .status.ready .dot{ background: var(--green); }
+  .status.ready .dot{ background: var(--green); box-shadow: 0 0 0 3px rgba(47,143,91,0.15); }
   .status.error .dot{ background: var(--danger); }
 
   /* card */
@@ -95,17 +106,24 @@
     transition: background .2s ease, border-color .2s ease;
   }
   .dropzone.drag{ background: #D3EEE4; border-color: var(--teal); }
+  .dropzone.loaded{ background: #DFF3EC; border-color: var(--teal); border-style: solid; }
+  .dropzone.disabled{ cursor:not-allowed; opacity:0.6; }
   .dropzone .icon{
     width:46px; height:46px; border-radius:50%;
     background: var(--paper);
     display:flex; align-items:center; justify-content:center;
     margin: 0 auto 16px;
     box-shadow: 0 8px 18px -10px rgba(22,50,79,0.2);
+    transition: background .2s ease;
   }
+  .dropzone.loaded .icon{ background: var(--teal); }
   .dropzone .icon svg{ width:20px; height:20px; }
   .dropzone .title{ font-size: 16px; font-weight:700; color: var(--navy-deep); margin-bottom:8px; }
   .dropzone .desc{ font-size: 13.5px; color: var(--ink-soft); margin-bottom: 10px; }
-  .dropzone .fname{ font-size: 13.5px; color: var(--ink-soft); font-weight:400; }
+  .dropzone .fname{ font-size: 13.5px; color: var(--ink-soft); font-weight:400; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .dropzone .fname .check{ display:none; color: var(--teal-dark); font-weight:700; }
+  .dropzone.loaded .fname{ color: var(--teal-dark); font-weight:600; }
+  .dropzone.loaded .fname .check{ display:inline; }
   input[type=file]{ display:none; }
 
   .field-row{
@@ -188,7 +206,7 @@
       </svg>
     </div>
     <h1>ADHD Assist</h1>
-    <div class="subtitle">EEG-Based ADHD Screening</div>
+    <div class="subtitle">EEG-Based ADHD Detection</div>
     <div class="credit">Afeka · Machine Learning Project</div>
     <div class="taskline">Binary Classification — ADHD / Control</div>
   </div>
@@ -205,8 +223,8 @@
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16V4M12 4 7 9M12 4l5 5M5 20h14" stroke="#3F9E96" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <div class="title">Drag an EEG recording here</div>
-      <div class="desc">Raw recording, 19 channels — MAT / NPY / CSV</div>
-      <div class="fname" id="fname">No file selected</div>
+      <div class="desc">MAT / NPY / CSV</div>
+      <div class="fname" id="fname"><span>No file selected</span><span class="check">✓</span></div>
     </div>
     <input type="file" id="fileInput" accept=".mat,.npy,.csv,.txt">
 
@@ -245,6 +263,7 @@
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const fname = document.getElementById('fname');
+  const fnameText = fname.querySelector('span');
   const analyzeBtn = document.getElementById('analyzeBtn');
   const result = document.getElementById('result');
   const resultPill = document.getElementById('resultPill');
@@ -252,6 +271,7 @@
   const metaLine = document.getElementById('metaLine');
 
   let selectedFile = null;
+  let locked = false; // true while analyzing, and while a result is showing
 
   // --- check server health on load ---
   fetch('/api/health')
@@ -259,7 +279,7 @@
     .then(({ ok, data }) => {
       if (ok) {
         statusEl.className = 'status ready';
-        statusText.textContent = '● Connected to server — ready for analysis';
+        statusText.textContent = 'Connected to server — ready for analysis';
       } else {
         statusEl.className = 'status error';
         statusText.textContent = 'Model not loaded on server yet';
@@ -271,29 +291,48 @@
     });
 
   // --- dropzone interactions ---
-  dropzone.addEventListener('click', () => fileInput.click());
-  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('click', () => { if (!locked) fileInput.click(); });
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!locked) dropzone.classList.add('drag');
+  });
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', e => {
     e.preventDefault();
     dropzone.classList.remove('drag');
-    if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+    if (!locked && e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
   });
   fileInput.addEventListener('change', () => {
-    if (fileInput.files.length) setFile(fileInput.files[0]);
+    if (!locked && fileInput.files.length) setFile(fileInput.files[0]);
   });
 
   function setFile(file){
     selectedFile = file;
-    fname.textContent = file.name;
+    fnameText.textContent = file.name;
+    dropzone.classList.add('loaded');
     analyzeBtn.disabled = false;
     analyzeBtn.classList.add('active');
     result.classList.remove('show');
   }
 
+  function resetUpload(){
+    selectedFile = null;
+    locked = false;
+    fnameText.textContent = 'No file selected';
+    dropzone.classList.remove('loaded');
+    dropzone.classList.remove('disabled');
+    fileInput.value = '';
+    analyzeBtn.disabled = true;
+    analyzeBtn.classList.remove('active');
+    result.classList.remove('show');
+    document.querySelectorAll('.actions button').forEach(b => b.classList.remove('picked'));
+  }
+
   // --- analyze ---
   analyzeBtn.addEventListener('click', async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || locked) return;
+    locked = true;
+    dropzone.classList.add('disabled');
     analyzeBtn.textContent = 'Analyzing…';
     analyzeBtn.disabled = true;
 
@@ -306,6 +345,9 @@
 
       if (!res.ok) {
         alert(data.error || 'Prediction failed.');
+        locked = false;
+        dropzone.classList.remove('disabled');
+        analyzeBtn.disabled = false;
         return;
       }
 
@@ -314,19 +356,23 @@
       confNum.textContent = data.confidence_pct + '%';
       metaLine.textContent = `${data.n_windows} window(s) analyzed · ${data.votes.ADHD} ADHD / ${data.votes.Control} Control votes`;
       result.classList.add('show');
+      // locked stays true — a new upload is only allowed after Approve/Edit/Reject
     } catch (err) {
       alert('Could not reach the server. Please try again.');
+      locked = false;
+      dropzone.classList.remove('disabled');
+      analyzeBtn.disabled = false;
     } finally {
       analyzeBtn.textContent = 'Analyze EEG';
-      analyzeBtn.disabled = false;
     }
   });
 
-  // --- clinician actions (UI only) ---
+  // --- clinician actions: confirm the result, then unlock for a new upload ---
   ['btnApprove','btnEdit','btnReject'].forEach(id => {
     document.getElementById(id).addEventListener('click', () => {
       document.querySelectorAll('.actions button').forEach(b => b.classList.remove('picked'));
       document.getElementById(id).classList.add('picked');
+      setTimeout(resetUpload, 400); // brief visual confirmation, then reset for next recording
     });
   });
 </script>
