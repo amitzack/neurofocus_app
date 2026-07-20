@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroFocus Assist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #16324F;
+    --navy-deep: #14293B;
+    --teal: #2E9E86;
+    --teal-dark: #24816D;
+    --teal-tint: #E4F5F0;
+    --bg-top: #E4F5EF;
+    --bg-bottom: #DCF0E8;
+    --paper: #FBFDFC;
+    --ink: #1C232B;
+    --ink-soft: #7A8891;
+    --line: #E1EAE7;
+    --green: #2F8F5B;
+    --green-bg: #FFFFFF;
+    --amber: #B8862F;
+    --danger: #B5533C;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    font-family:'Heebo', sans-serif;
+    color: var(--ink);
+    display:flex;
+    justify-content:center;
+    padding: 64px 20px 80px;
+  }
+  .page{ width:100%; max-width: 480px; }
+
+  /* header */
+  .head{ text-align:center; margin-bottom: 30px; }
+  .mark{
+    width: 90px; height:70px;
+    display:flex; align-items:center; justify-content:center;
+    margin: 0 auto 20px;
+  }
+  .mark svg{ width: 90px; height:70px; }
+  h1{
+    font-family:'Heebo', sans-serif;
+    font-size: 34px; font-weight: 800;
+    color: var(--navy-deep);
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle{ font-size: 17px; font-weight:500; color: var(--teal-dark); margin-bottom: 14px; }
+  .credit{ font-size: 13.5px; color: var(--ink-soft); margin-bottom: 5px; }
+  .taskline{ font-size: 13.5px; color: var(--ink-soft); }
+
+  /* status badge */
+  .status{
+    margin: 0 auto 26px;
+    width: fit-content;
+    padding: 11px 20px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    display:flex; align-items:center; gap:9px;
+    background: var(--paper); color: var(--ink);
+    box-shadow: 0 8px 20px -14px rgba(22,50,79,0.25);
+  }
+  .status .dot{ width:9px; height:9px; border-radius:50%; background: #C7C1AF; flex:none; }
+  .status.ready .dot{ background: var(--green); }
+  .status.error .dot{ background: var(--danger); }
+
+  /* card */
+  .card{
+    background: var(--paper);
+    border-radius: 24px;
+    padding: 34px 30px;
+    box-shadow: 0 30px 70px -45px rgba(22,50,79,0.4);
+  }
+  .card-head{
+    margin-bottom: 20px;
+  }
+  .card-head span{ font-size: 12.5px; font-weight:700; color: var(--ink-soft); letter-spacing:.08em; }
+
+  .dropzone{
+    border: 2px dashed #A9D4C6;
+    border-radius: 16px;
+    background: var(--teal-tint);
+    padding: 38px 20px;
+    text-align:center;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .dropzone.drag{ background: #D3EEE4; border-color: var(--teal); }
+  .dropzone .icon{
+    width:46px; height:46px; border-radius:50%;
+    background: var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 18px -10px rgba(22,50,79,0.2);
+  }
+  .dropzone .icon svg{ width:20px; height:20px; }
+  .dropzone .title{ font-size: 16px; font-weight:700; color: var(--navy-deep); margin-bottom:8px; }
+  .dropzone .desc{ font-size: 13.5px; color: var(--ink-soft); margin-bottom: 10px; }
+  .dropzone .fname{ font-size: 13.5px; color: var(--ink-soft); font-weight:400; }
+  input[type=file]{ display:none; }
+
+  .field-row{
+    margin-top: 22px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 4px 2px;
+  }
+  .field-row label{ font-size: 14.5px; color: var(--ink-soft); font-weight:400; }
+  .field-row input{
+    border:none; background:transparent; font-size:15px; font-weight:700;
+    color: var(--ink); width: 50px; font-family:'Heebo'; text-align:right; padding:0;
+  }
+
+  .analyze-btn{
+    margin-top: 22px;
+    width:100%;
+    padding: 15px;
+    border-radius: 100px;
+    border: none;
+    font-family:'Heebo';
+    font-size: 15.5px;
+    font-weight: 600;
+    cursor: not-allowed;
+    background: #D6DEDA;
+    color: #96A29B;
+    transition: background .2s ease, color .2s ease, transform .1s ease;
+  }
+  .analyze-btn.active{
+    cursor:pointer;
+    background: var(--navy-deep);
+    color: white;
+  }
+  .analyze-btn.active:hover{ background: var(--navy); }
+  .analyze-btn.active:active{ transform: scale(0.99); }
+  .analyze-btn:disabled{ pointer-events:none; }
+
+  /* result */
+  .result{
+    margin-top: 22px;
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    display:none;
+  }
+  .result.show{ display:block; }
+  .result-top{ display:flex; justify-content:space-between; align-items:flex-start; gap: 14px; }
+  .result-pill{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size: 12.5px; font-weight:700; padding: 6px 12px; border-radius:100px;
+  }
+  .result-pill.adhd{ background:#FBEEE8; color:#B8622F; }
+  .result-pill.control{ background: var(--green-bg); color: var(--green); }
+  .conf-box{ text-align:left; }
+  .conf-box .num{ font-family:'Heebo', sans-serif; font-size: 32px; font-weight:800; color: var(--navy-deep); line-height:1; }
+  .conf-box .lbl{ font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; }
+
+  .meta-line{ margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+
+  .actions{ display:flex; gap: 10px; margin-top: 20px; }
+  .actions button{
+    flex:1; padding: 11px; border-radius: 10px; font-size: 13px; font-weight:700;
+    font-family:'Heebo'; cursor:pointer; border: 1px solid var(--line); background: var(--teal-tint);
+    color: var(--ink-soft); transition: all .15s ease;
+  }
+  .actions button.approve{ background: var(--navy-deep); color:white; border-color: var(--navy-deep); }
+  .actions button.approve:hover{ background: var(--navy); }
+  .actions button.reject:hover{ background:#FBEBE7; color:var(--danger); border-color:#F4CFC5; }
+  .actions button.edit:hover{ background:#F1EFE3; color:var(--amber); }
+  .actions button.picked{ outline: 2px solid var(--teal); outline-offset:1px; }
+
+  footer{ text-align:center; margin-top: 26px; font-size:11.5px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="head">
+    <div class="mark">
+      <svg viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 40 L24 40 L30 20 L40 55 L48 8 L55 40 L92 40" stroke="#2E9E86" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1>ADHD Assist</h1>
+    <div class="subtitle">EEG-Based ADHD Screening</div>
+    <div class="credit">Afeka · Machine Learning Project</div>
+    <div class="taskline">Binary Classification — ADHD / Control</div>
+  </div>
+
+  <div class="status" id="status">
+    <span class="dot"></span><span id="statusText">Checking server connection…</span>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span>UPLOAD DATA</span></div>
+
+    <div class="dropzone" id="dropzone">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16V4M12 4 7 9M12 4l5 5M5 20h14" stroke="#3F9E96" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="title">Drag an EEG recording here</div>
+      <div class="desc">Raw recording, 19 channels — MAT / NPY / CSV</div>
+      <div class="fname" id="fname">No file selected</div>
+    </div>
+    <input type="file" id="fileInput" accept=".mat,.npy,.csv,.txt">
+
+    <div class="field-row">
+      <label>Sampling Rate (Hz)</label>
+      <input type="text" value="128" disabled>
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" disabled>Analyze EEG</button>
+
+    <div class="result" id="result">
+      <div class="result-top">
+        <div>
+          <div class="result-pill" id="resultPill">—</div>
+          <div class="meta-line" id="metaLine"></div>
+        </div>
+        <div class="conf-box">
+          <div class="num" id="confNum">—</div>
+          <div class="lbl">Model confidence</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="reject" id="btnReject">✕ Reject</button>
+        <button class="edit" id="btnEdit">✎ Edit</button>
+        <button class="approve" id="btnApprove">✓ Approve</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Decision-support tool · Final judgment remains with the clinician</footer>
+</div>
+
+<script>
+  const statusEl = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fname = document.getElementById('fname');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const result = document.getElementById('result');
+  const resultPill = document.getElementById('resultPill');
+  const confNum = document.getElementById('confNum');
+  const metaLine = document.getElementById('metaLine');
+
+  let selectedFile = null;
+
+  // --- check server health on load ---
+  fetch('/api/health')
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (ok) {
+        statusEl.className = 'status ready';
+        statusText.textContent = '● Connected to server — ready for analysis';
+      } else {
+        statusEl.className = 'status error';
+        statusText.textContent = 'Model not loaded on server yet';
+      }
+    })
+    .catch(() => {
+      statusEl.className = 'status error';
+      statusText.textContent = 'Could not reach the server';
+    });
+
+  // --- dropzone interactions ---
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) setFile(fileInput.files[0]);
+  });
+
+  function setFile(file){
+    selectedFile = file;
+    fname.textContent = file.name;
+    analyzeBtn.disabled = false;
+    analyzeBtn.classList.add('active');
+    result.classList.remove('show');
+  }
+
+  // --- analyze ---
+  analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    analyzeBtn.textContent = 'Analyzing…';
+    analyzeBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const res = await fetch('/api/predict', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Prediction failed.');
+        return;
+      }
+
+      resultPill.textContent = data.label === 'ADHD' ? 'ADHD Suspected' : 'No ADHD Detected';
+      resultPill.className = 'result-pill ' + (data.label === 'ADHD' ? 'adhd' : 'control');
+      confNum.textContent = data.confidence_pct + '%';
+      metaLine.textContent = `${data.n_windows} window(s) analyzed · ${data.votes.ADHD} ADHD / ${data.votes.Control} Control votes`;
+      result.classList.add('show');
+    } catch (err) {
+      alert('Could not reach the server. Please try again.');
+    } finally {
+      analyzeBtn.textContent = 'Analyze EEG';
+      analyzeBtn.disabled = false;
+    }
+  });
+
+  // --- clinician actions (UI only) ---
+  ['btnApprove','btnEdit','btnReject'].forEach(id => {
+    document.getElementById(id).addEventListener('click', () => {
+      document.querySelectorAll('.actions button').forEach(b => b.classList.remove('picked'));
+      document.getElementById(id).classList.add('picked');
+    });
+  });
+</script>
+
+</body>
+</html>

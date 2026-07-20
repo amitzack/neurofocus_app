@@ -1,0 +1,16 @@
+{
+  "raw_feature_len": 1501,
+  "n_features_selected": 240,
+  "feature_selection_mode": "ACC",
+  "knn_params": {
+    "n_neighbors": 3,
+    "weights": "distance",
+    "metric": "euclidean"
+  },
+  "label_map": {
+    "0": "ADHD",
+    "1": "Control"
+  },
+  "sanity_check_accuracy": 0.9904477611940299,
+  "sanity_check_f1": 0.9891891891891892
+}
